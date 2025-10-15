@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+# --- FIX: Add permissions to allow the GITHUB_TOKEN to write to the repository ---
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,6 +18,9 @@ jobs:
       # Step 1: Checkout code
       - name: Checkout Repository
         uses: actions/checkout@v3
+        # Set fetch-depth to 0 if the history is required for deployment actions
+        with:
+          fetch-depth: 0 
 
       # Step 2: Setup Node.js environment
       - name: Set up Node
@@ -27,11 +34,17 @@ jobs:
 
       # Step 4: Build the project
       - name: Build Project
+        # NOTE: Make sure your 'npm run build' script outputs the static files 
+        # into the 'dist' directory used in the deploy step.
         run: npm run build
 
       # Step 5: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
+          # This is the standard, secure way to use the GITHUB_TOKEN for pushing
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Path where your built files are located (e.g., the output of 'npm run build')
           publish_dir: ./dist
+          # Set the target branch for GitHub Pages (usually 'gh-pages')
+          publish_branch: gh-pages
